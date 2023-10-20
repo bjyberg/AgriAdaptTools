@@ -2,8 +2,7 @@
 % Please edit documentation in R/atlas_resample.r
 \name{atlas_resample}
 \alias{atlas_resample}
-\title{Resample Raster Data to Adaptaion Atlas Grid (5 arc min)
-This function resamples a given raster object to a standard atlas grid with a specified resampling method.}
+\title{Resample Raster Data to Adaptaion Atlas Grid (5 arc min)}
 \usage{
 atlas_resample(x, fun = "bilinear", ...)
 }
@@ -20,17 +19,18 @@ supported by the 'terra' package (e.g., "sum", "bilinear" "cubic", "mean") can b
 A resampled raster object on the standard atlas grid.
 }
 \description{
-Resample Raster Data to Adaptaion Atlas Grid (5 arc min)
 This function resamples a given raster object to a standard atlas grid with a specified resampling method.
 }
 \examples{
 # Example 1: Resample a raster using the default method
-result <- atlas_resample(input_raster)
+ \dontrun{result <- atlas_resample(input_raster)}
 #
 # Example 2: Resample a raster using a specified resampling method
-result <- atlas_resample(input_raster, fun = "sum")
-#
+ \dontrun{result <- atlas_resample(input_raster, fun = "sum")}
+
 }
 \seealso{
 \code{\link[terra:resample]{terra::resample()}} for detailed information on the resampling process.
+
+@export
 }
