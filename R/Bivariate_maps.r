@@ -58,7 +58,8 @@ bivar_legend <- function(x.title, y.title, n = 3, pal = NULL, font_size = 12) {
   legend_df <- data.frame(x.var = rep(c(1:3), 3),
     y.var = rep(1:3, each = 3),
     fill_col = pal)
-      legend <- ggplot(legend_df) +
+  
+  legend <- ggplot(legend_df) +
     geom_tile(mapping = aes(
       x = x.var,
       y = y.var,

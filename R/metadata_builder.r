@@ -123,7 +123,7 @@ atlas_metadata <- function(data = NA,
 ) {
   match.arg(save_output)
   metadata.date <- Sys.Date()
-  if (class(data) == "character") {
+  if (inherits(data, "character")) {
     ext <- tools::file_ext(data)
     folder <- dirname(data)
     if (file.filename == "") {
@@ -146,7 +146,7 @@ atlas_metadata <- function(data = NA,
     grid.xmax <- sf::st_bbox(data)$xmax
     grid.ymin <- sf::st_bbox(data)$ymin
     grid.ymax <- sf::st_bbox(data)$ymax
-    if (class(data) == "stars") {
+    if (inherits(data, "stars")) {
       grid.xres <- stars::st_res(data)[1]
       grid.yres <- stars::st_res(data)[2]
       grid.nrow <- nrow(data)
@@ -162,7 +162,7 @@ atlas_metadata <- function(data = NA,
     grid.xmax <- terra::ext(data)$xmax
     grid.ymin <- terra::ext(data)$ymin
     grid.ymax <- terra::ext(data)$ymax
-    if (class(data) == "SpatRaster") {
+    if (inherits(data,"SpatRaster")) {
       grid.xres <- terra::res(data)[1]
       grid.yres <- terra::res(data)[2]
       grid.nrow <- terra::nrow(data)

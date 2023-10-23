@@ -39,7 +39,7 @@
 #' @seealso [bivar_legend()] to create bivariate legend
 #' @importFrom stats quantile
 #' @import sf
-#' @importFrom terra global classify levels concats
+#' @importFrom terra global classify levels concats nlyr
 #' 
 #' @export
 make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
@@ -56,7 +56,7 @@ make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
         "Provide a palette of", n * n, "colors."))
     }
   }
-  if (any(class(data) == "SpatRaster")) {
+  if (inherits(data, "SpatRaster")) {
     if (nlyr(data) == 2) {
       bivar_map <- .make_bivar_raster(data, n = n, pal = pal)[[3]]
     } else {
@@ -65,9 +65,6 @@ make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
   } else if (any(class(data) %in% c("SpatVector", "sf", "sfc"))) {
     if (is.null(x.val) | is.null(y.val)) {
       stop("Provide x and y attribute names.")
-    }
-    if (any(class(data) == "SpatVector")) {
-      data <- st_as_sf(data)
     }
     bivar_map <- .make_bivar_vect(data, n = n, pal = pal,
       x.val = x.val, y.val = y.val)
@@ -79,7 +76,7 @@ make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
 }
 
 .make_bivar_raster <- function(data, n = 3, categorical = FALSE, pal = NULL) {
-  if (class(data) != "SpatRaster" | nlyr(data) != 2) {
+  if (inherits(data, "SpatRaster") | nlyr(data) != 2) {
     stop("Data must be a SpatRaster with 2 layers")
   }
   if (is.null(pal)) {
