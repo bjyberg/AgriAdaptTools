@@ -2,7 +2,7 @@
 % Please edit documentation in R/atlas_resample.r
 \name{atlas_resample}
 \alias{atlas_resample}
-\title{Resample Raster Data to Adaptaion Atlas Grid (5 arc min)}
+\title{Resample Raster Data to Adaptation Atlas Grid (5 arc min)}
 \usage{
 atlas_resample(x, fun = "bilinear", ...)
 }
@@ -30,7 +30,5 @@ This function resamples a given raster object to a standard atlas grid with a sp
 
 }
 \seealso{
-\code{\link[terra:resample]{terra::resample()}} for detailed information on the resampling process.
-
-@export
+\code{\link[terra:resample]{terra::resample()}} for detailed information on the resampling process
 }

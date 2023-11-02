@@ -2,33 +2,35 @@
 % Please edit documentation in R/write_cog.r
 \name{write_cog}
 \alias{write_cog}
-\title{Write a Cloud-Optimized GeoTIFF (COG) from a source raster file.}
+\title{Write a Cloud-Optimized GeoTIFF (COG) from a raster file.}
 \usage{
-write_cog(path, out_dir = NULL, add_flag = TRUE)
+write_cog(x, filename)
 }
 \arguments{
-\item{path}{A character string specifying the path to the source raster file.}
+\item{x}{A SpatRaster or a character string specifying the path to a raster file}
 
-\item{out_dir}{A character string specifying the output directory where the COG
+\item{filename}{A character string specifying the output directory where the COG
 will be saved. If NULL (default), the COG will be saved in the same directory
-as the source file.}
-
-\item{add_flag}{A logical value indicating whether to add "_cog" to file's
-name. Default is TRUE.}
+as the source file using the same name with a "_cog" suffix. Required if x
+is a SpatRaster}
 }
 \value{
 NULL. The function generates a COG file and saves it to the specified
 location.
 }
 \description{
-This function takes a source raster file, generates overviews for it, and
+This function takes a raster file, generates overviews for it, and
 writes a Cloud-Optimized GeoTIFF (COG) to the specified output directory.
 }
 \examples{
 # Create a COG from a source raster file with default parameters
-\dontrun{write_cog("path/to/source_raster.tif")}
+\dontrun{
+write_cog("path/to/source_raster.tif")
+}
 #
 # Create a COG with a custom output directory and no flag added to the filename
-\dontrun{write_cog("path/to/source_raster.tif", out_dir = "cogs", add_flag = FALSE)}
+\dontrun{
+write_cog("path/to/source_raster.tif", out_dir = "cogs", add_flag = FALSE)
+}
 #
 }

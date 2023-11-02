@@ -169,11 +169,6 @@ atlas_metadata(
 }
 \value{
 A data.frame of meta.data
-imports sf st_crs st_bbox
-imports stars st_res
-imports terra crs ext nrow ncol res
-imports tools file_path_sans_ext file_ext
-imports utils write.csv
 }
 \description{
 This function will assist you to systematically generate meta-data for the Adaptation Atlas.
