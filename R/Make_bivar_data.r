@@ -40,7 +40,7 @@
 #' @importFrom stats quantile
 #' @import sf
 #' @importFrom terra global classify levels concats nlyr
-#' 
+#'
 #' @export
 make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
     pal = NULL) {

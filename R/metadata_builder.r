@@ -60,22 +60,22 @@
 #' @param data.shapefile_unit For the fields listed in `data.shapefile_field` please provide a list of units, e.g. `list(NA,NA,"proportion")`.
 #' @param data.shapefile_description For the fields listed in `data.shapefile_field` please provide a description of the field, e.g. `list("Country name","Administrative unit 1 name","Poverty headcount ratio at national poverty lines")`.
 #' @return A data.frame of meta.data
-#' imports sf st_crs st_bbox
-#' imports stars st_res
-#' imports terra crs ext nrow ncol res
-#' imports tools file_path_sans_ext file_ext
-#' imports utils write.csv
+#' @importFrom sf st_crs st_bbox
+#' @importFrom stars st_res
+#' @importFrom terra crs ext nrow ncol res
+#' @importFrom tools file_path_sans_ext file_ext
+#' @importFrom utils write.csv
 #'
 #' @export
 atlas_metadata <- function(data = NA,
                            folder = NA,
                            save_output = c("csv", "txt"),
-                           dataset.title_short = "",
+                           dataset.title_short = "", # make Required
                            dataset.title_long = "",
-                           dataset.desc = "",
-                           dataset.author = "",
-                           dataset.contact = "",
-                           dataset.contact_email = "",
+                           dataset.desc = "", # make Required
+                           dataset.author = "", # make Required
+                           dataset.contact = "", # make Required
+                           dataset.contact_email = "", # make Required
                            dataset.pub_doi = "",
                            dataset.data_doi = "",
                            dataset.sourceurl = "",
@@ -84,7 +84,7 @@ atlas_metadata <- function(data = NA,
                            dataset.licence = "",
                            file.filename = "",
                            file.format = "",
-                           file.data_type = "",
+                           file.data_type = "", # make Required
                            file.no_value_data = "",
                            file.file_naming_convention = "",
                            file.flags = "",
@@ -95,7 +95,7 @@ atlas_metadata <- function(data = NA,
                            variable.commodity = "",
                            variable.type = "",
                            variable.statistic = "",
-                           variable.unit = "",
+                           variable.unit = "", # make Required
                            method.analysis_type = "",
                            method.description = "",
                            method.github = "",

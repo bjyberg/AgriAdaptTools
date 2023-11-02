@@ -23,7 +23,6 @@
 #' [terra::resample()] for detailed information on the resampling process.
 #'
 #'  @export
-
 atlas_resample <- function(x, fun = "bilinear", ...) {
   if (!inherits(x, "SpatRaster")) {
     simpleError("Input raster must be of class 'SpatRaster'.")
@@ -33,5 +32,3 @@ base <- rast(resolution = 5/60, crs = "epsg:4326")
   print(resampled)
   return(resampled)
 }
-
-
