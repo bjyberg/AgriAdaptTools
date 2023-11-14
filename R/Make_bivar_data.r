@@ -9,6 +9,7 @@
 #' @param n Number of classes for the bivariate map. Suggested is 3.
 #' @param x.val First attribute name (vector data only).
 #' @param y.val Second attribute name (vector data only).
+#' @param categorical An optional logical value for use if data is a categorical SpatRaster
 #' @param pal A vector of color codes to use for the map. If not provided, a
 #'  default color palette is used if n = 3.
 #'
@@ -22,18 +23,33 @@
 #' @examples
 #' # Create a full bivariate map with legend using sf object
 #' \dontrun{
-#' # map_data <- make_bivariate_data(t_sf, x.val = "heat_stress", y.val = "")
-#' # legend <- bivar_legend(x.title = "Heat Stress", y.title = "human_index")
-#' # map <- ggplot(map_data) +
-#' #   geom_sf(aes(fill = bi_color), color = NA) +
-#' #   scale_fill_identity(guide = "legend") +
-#' #   theme_void() +
-#' #   theme(legend.position = "none")
-#' # layout <- "
-#' # #22
-#' # 122
-#' # "
-#' # legend + map + plot_layout(design = layout, widths = c(.5, 1))
+#' map_data <- make_bivariate_data(t_sf, x.val = "heat_stress", y.val = "")
+#' legend <- bivar_legend(x.title = "Heat Stress", y.title = "human_index")
+#' map <- ggplot(map_data) +
+#'   geom_sf(aes(fill = bi_color), color = NA) +
+#'   scale_fill_identity(guide = "legend") +
+#'   theme_void() +
+#'   theme(legend.position = "none")
+#' layout <- "
+#' #22
+#' 122
+#' "
+#' legend + map + plot_layout(design = layout, widths = c(.5, 1))
+#' }
+#' # Create a bivariate map with 4 groups and a categorical raster
+#' \dontrun{
+#' heat_stress <- rast(/path/to/heat_stress) # a categorical raster of 4 groups
+#' healthcare <- rast(/path/to/healthcare) # initially a non-categorical raster
+#' 
+#' #' pal <- c("#e8e8e8", "#bddede", "#8ed4d4", "#5ac8c8", "#dabdd4",
+#'   "#bdbdd4", "#8ebdd4", "#5abdc8", "#cc92c1", "#bd92c1", "#8e92c1",
+#'   "#5a92c1", "#be64ac","#bd64ac", "#8e64ac", "#5a64ac")
+#' # the healthcare raster needs to be made categorical same # of levels as the heat stress
+#' health_levels <- classify(healthcare, c(30, 60, 120, 240, 6921), include.lowest = T)
+#' levels(health_levels) <- c("Low", "Medium", "High", "Very High")
+#' health_levels <- as.factor(health_levels)  # make sure both are read as factors
+#' vars <- c(as.factor(heat_stress), health_levels)
+#' make_bivariate_data(vars, n = 4, categorical = TRUE, pal = pal)
 #' }
 #'
 #' @seealso [bivar_legend()] to create bivariate legend
@@ -43,7 +59,7 @@
 #'
 #' @export
 make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
-    pal = NULL) {
+    pal = NULL, categorical = FALSE) {
   if (n < 3 | n > 9) {
     stop(paste0("Number of bivariate groups (n) must be between 3 and 9."))
   }
@@ -75,8 +91,8 @@ make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
   return(bivar_map)
 }
 
-.make_bivar_raster <- function(data, n = 3, categorical = FALSE, pal = NULL) {
-  if (inherits(data, "SpatRaster") | nlyr(data) != 2) {
+.make_bivar_raster <- function(data, n = 3, categorical, pal = NULL) {
+  if (!inherits(data, "SpatRaster") | nlyr(data) != 2) {
     stop("Data must be a SpatRaster with 2 layers")
   }
   if (is.null(pal)) {
@@ -88,20 +104,23 @@ make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
         "Provide a palette of", n * n, "colors."))
     }
   }
-  #   if (categorical) {
-  #     n_cats <- nrow(unique(data[[1]]))
-  #     if (n != n_cats) {
-  #       print(
-  #         "n is not equal to number of categories. Defaulted number of categories"
-  #       )
-  #       n <- n_cats
-  #     }
-  #     }
-  #     if (n_cats != length(unique(data[[2]]))) {
-  #       print("Categorical is TRUE, but number of categories don't match.")
-  #       stop("Both Rasters must be categorical and have same number of categories.")
-  #     }
-  #   } else {
+    if (categorical) {
+      if (!is.factor(data[[1]]) | !is.factor(data[[2]])) {
+        stop("Raster must be categorical. Assign levels() <- and as.factor().")
+      }
+      n_cats <- length(levels(data[[1]]))
+      if (n != n_cats) {
+        print(
+          "n is not equal to number of categories. Defaulted number of categories"
+        )
+        n <- n_cats
+      }
+      if (n_cats != length(levels(data[[2]]))) {
+        print("Categorical is TRUE, but number of categories don't match.")
+        stop("Both Rasters must be categorical and have same number of categories.")
+      }
+      cat_rast <- concats(data[[1]], data[[2]])
+    } else {
   quan <- global(data, quantile,
     probs = seq(0, 1, length.out = (n + 1)), na.rm = T)
   x_quans <- unname(unlist(quan[1, ]))
@@ -117,8 +136,8 @@ make_bivariate_data <- function(data, n = 3, x.val = NULL, y.val = NULL,
   # levels(cat_rast) <- data.frame(ID = 0:(n*n - 1), pal = pal)
   # plot_colors <- as.vector(pal_shuffle)
   # plot(cat_rast, col = plot_colors)
-  return(c(data, cat_rast))
-  #   }
+     }
+return(c(data, cat_rast))
 }
 
 .make_bivar_vect <- function(data, n = 3, x.val, y.val, pal = NULL) {
