@@ -52,6 +52,15 @@ layout <- "
 legend + map + plot_layout(design = layout, widths = c(.5, 1))
 }
 
+# Create a legend using n = 4
+\dontrun{
+pal <- c("#e8e8e8", "#bddede", "#8ed4d4", "#5ac8c8", "#dabdd4",
+  "#bdbdd4", "#8ebdd4", "#5abdc8", "#cc92c1", "#bd92c1", "#8e92c1",
+  "#5a92c1", "#be64ac","#bd64ac", "#8e64ac", "#5a64ac")
+ bivar_legend("Human Heat Stress", "Minutes to Healthcare",
+   n = 4, pal = pal)
+}
+
 }
 \seealso{
 \code{\link[=make_bivariate_data]{make_bivariate_data()}} to create bivariate data from raster or vector data
