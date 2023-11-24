@@ -121,7 +121,7 @@ atlas_metadata <- function(data = NA,
                            data.shapefile_unit = "",
                            data.shapefile_description = ""
 ) {
-  match.arg(save_output)
+  save_output <- match.arg(save_output)
   metadata.date <- Sys.Date()
   if (inherits(data, "character")) {
     ext <- tools::file_ext(data)

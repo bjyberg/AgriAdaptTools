@@ -9,6 +9,7 @@
 #' @return A normalized numeric vector or SpatRaster object.
 #' @importFrom terra minmax
 #' @export
+
 MinMax_norm <- function(x, inverse = FALSE) {
   if (inherits(x, "SpatRaster")) {
     mnmx <- terra::minmax(x, compute = TRUE)
