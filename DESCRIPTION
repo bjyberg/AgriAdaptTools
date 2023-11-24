@@ -1,13 +1,12 @@
 Package: AAtools
-Title: What the Package Does (One Line, Title Case)
+Title: Adaptation Atlas Tools
 Version: 0.0.0.9000
 Authors@R: 
-    person("Brayden", "Youngberg", , "bjyberg1@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person("Brayden", "Youngberg", , "bjyberg1@gmail.com", role = c("aut", "cre"))
+Description: "This is a set of tools that are useful for the development and further analysis of data from the Agriculture Adaptation Atlas."
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports: 
-    terra, utils, sf, ggplot2, stars
+    terra, utils, sf, ggplot2, stars, sfarrow, exactextractr, s3fs, jsonlite, data.tree
