@@ -72,5 +72,7 @@ write_cog <- function(x, filename) {
       "-of", "COG"
     )
   )
-  if (dir.exists(temp_holder)) unlink(temp_holder)
+  if (exists('temp_holder')) {
+    if (dir.exists(temp_holder)) unlink(temp_holder, recursive = T)
+  }
 }
