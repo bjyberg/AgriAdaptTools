@@ -19,7 +19,8 @@
 #'     OR
 #'     AWS_CONFIG_FILE = "~/.aws/config" (or ~/path/to/aws/config/file),
 #'  )
-#' file_to_s3(localpath = "path/to/local/file.tif", bucketpath = "path/to/bucket/file.tif", cog = TRUE, overwrite = FALSE)
+#' file_to_s3(localpath = "path/to/local/file.tif",
+#'  bucketpath = "path/to/bucket/file.tif", cog = TRUE, overwrite = FALSE)
 #' 
 #' # or for a full folder upload
 #' folder_list <- list.files("path/to/folder", recursive = TRUE, pattern = "\\.tif|\\.gpkg")
