@@ -11,7 +11,7 @@
 #'
 #' @importFrom tools file_ext
 #' @importFrom s3fs S3FileSystem
-#' @importFrom AAtools write_cog
+#' @importFrom AgriAdaptTools write_cog
 #' @importFrom base tempdir file.path dir.exists unlink
 #' @export
 file_to_s3 <- function(localpath, bucketpath, cog = TRUE, ...) {
@@ -28,3 +28,8 @@ file_to_s3 <- function(localpath, bucketpath, cog = TRUE, ...) {
   }
   return(s3_file)
 }
+
+# to do:
+# - keep folder structure/make new folders if needed to keep dir structure
+# - full folder adn subfolder upload that allows cog converstion (or add example)
+# - possible overwrite question/check handler.

@@ -1,5 +1,5 @@
-Package: AAtools
-Title: Adaptation Atlas Tools
+Package: AgriAdaptTools
+Title: Adaptation Atlas Toolkit
 Version: 0.0.0.9000
 Authors@R: 
     person("Brayden", "Youngberg", , "bjyberg1@gmail.com", role = c("aut", "cre"))
