@@ -63,5 +63,5 @@ pal <- c("#e8e8e8", "#bddede", "#8ed4d4", "#5ac8c8", "#dabdd4",
 
 }
 \seealso{
-\code{\link[AAtools:make_bivariate_data]{AAtools::make_bivariate_data()}} to create bivariate data from raster or vector data
+\code{\link[=make_bivariate_data]{make_bivariate_data()}} to create bivariate data from raster or vector data
 }

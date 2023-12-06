@@ -12,24 +12,28 @@
 #' @return An sf object containing the aggregated data
 #' @importFrom terra rast nlyr
 #' @importFrom exactextractr exact_extract
-#' @importFrom sfarrow st_read_parquet
-#' @import sf
+#' @importFrom sf read_sf
 #' @seealso \code{\link[exactextractr]{exact_extract}}
 #' @export
 
 atlas_aggregate <- function(x, admin_level = c('admin0', 'admin1', 'admin2'),
                             fun, colname = NULL, ...) {
   admin_level <- match.arg(admin_level)
-  admin <- sfarrow::st_read_parquet(
+  # admin <- sfarrow::st_read_parquet(
+  #   paste0(
+  #     "s3://digital-atlas/boundaries/atlas-region_",
+  #     admin_level,
+  #     ".parquet"
+  #   )
+  # )
+  admin <- sf::read_sf(
     paste0(
-      "s3://digital-atlas/atlas-data/boundaries/atlas-region_",
-      admin_level,
-      ".parquet"
+      "/vsis3/digital-atlas/boundaries/atlas-region_", admin_level, "_harmonized.gpkg"
     )
   )
   print(paste('Extracting data for admin', admin_level, 'using', fun))
   if (inherits(x, "character")) {
-    x <- rast(x)
+    x <- terra::rast(x)
   }
   if (is.null(colname)) {
   colname <- names(x)[1]

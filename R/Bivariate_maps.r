@@ -49,7 +49,7 @@
 #' }
 #'
 #' @seealso
-#' [AAtools::make_bivariate_data()] to create bivariate data from raster or vector data
+#' [AgriAdaptTools::make_bivariate_data()] to create bivariate data from raster or vector data
 #'
 #' @import ggplot2
 #'

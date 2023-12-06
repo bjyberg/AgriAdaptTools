@@ -28,7 +28,7 @@ atlas_resample <- function(x, fun = "bilinear", ...) {
   if (!inherits(x, "SpatRaster")) {
     simpleError("Input raster must be of class 'SpatRaster'.")
   }
-  base <- rast(resolution = 5 / 60, crs = "epsg:4326",
+  base <- rast(resolution = (5 / 60), crs = "epsg:4326",
     xmin = -26, xmax = 58, ymin = -47, ymax = 41,
   )
   resampled <- resample(x, base, method = fun, ...)
