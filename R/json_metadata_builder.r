@@ -39,7 +39,8 @@ collection_metadata <- function(
   source <- append(source, folder.source)
 
   folder.metadata <- list(
-    folderName = basename(folder.path),
+    collectionName = basename(folder.path),
+    collectionPath = folder.path,
     description = folder.description,
     keywords = keywords,
     metadata = metadata,
@@ -50,11 +51,16 @@ collection_metadata <- function(
     source = source,
     processing = process
   )
-  # folder.metadata$source[["authors"]] <- .author(source.author, source.author.email)
+  out_nam <- paste0(folder.path, "/", basename(folder.path),
+    "_digiAtlas-metadata.json") # THIS PART OF NAME HARDCODED TO FIND LATER
+  
+  jsonlite::toJSON(folder.metadata, pretty = T, auto_unbox = T) |>
+    cat(file = out_nam)
+  
   return(folder.metadata)
 }
 
-itemgroup_metadata <- function(
+itemgroup_metadata <- function( # TODO: add write fn to this and catalog
   folder_metadata,
   file_list, # NOTE: File List should be relative to top-level json folder metadata
   name,
@@ -63,10 +69,6 @@ itemgroup_metadata <- function(
   file.type,
   author.name,
   author.email,
-  source.license,
-  source.citation = NULL,
-  source.url = NULL,
-  source.doi = NULL,
   group.unit,
   name.format,
   name.separator = "_",
@@ -74,6 +76,10 @@ itemgroup_metadata <- function(
   temporal.resolution,
   temporal.start_date,
   temporal.end_date,
+  source.license = NULL,
+  source.citation = NULL,
+  source.url = NULL,
+  source.doi = NULL,
   process.derived_from = NULL,
   process.description = NULL,
   process.code = NULL,
@@ -95,42 +101,37 @@ itemgroup_metadata <- function(
       " file, or a list object made by the Folder_metadata function."
     ))
   }
-  folder_metadata$dateModified <- format(Sys.time(), "%Y-%m-%d")
-  base_folder <- folder_metadata$folderName
+  folder_metadata$metadata$dateModified <- format(Sys.time(), "%Y-%m-%d")
+  base_folder <- folder_metadata$collectionName
 
-  if (!is.null(folder_metadata$source$authors)) {
-    print("author provide in folder metadata. Setting group authors to NULL")
-    author.name <- NULL
-    author.email <- NULL
-  }
   if (!is.null(folder_metadata$source$license)) {
-    print("license provided in folder metadata. Setting group license to NULL")
+    print("license provided in folder metadata. Setting itemgroup license to NULL")
     source.license <- NULL
   }
   if (!is.null(folder_metadata$source$citation)) {
-    print("citation provided in folder metadata. Setting group citation to NULL")
+    print("citation provided in folder metadata. Setting itemgroup citation to NULL")
     source.citation <- NULL
   }
   if (!is.null(folder_metadata$source$url)) {
-    print("license provide in folder metadata. Setting group license to NULL")
+    print("license provide in folder metadata. Setting itemgroup license to NULL")
     source.url <- NULL
   }
   if (!is.null(folder_metadata$source$doi)) {
-    print("citation provided in folder metadata. Setting group citation to NULL")
+    print("citation provided in folder metadata. Setting itemgroup citation to NULL")
     source.doi <- NULL
   }
-  if (!is.null(folder_metadata$processing$derived_from)) {
-    print("derived_from provided in folder metadata. Setting group derived_from to NULL")
-    process.derived_from <- NULL
-  }
-  if (!is.null(folder_metadata$processing$description)) {
-    print("description provided in folder metadata. Setting group description to NULL")
-    process.description <- NULL
-  }
-  if (!is.null(folder_metadata$processing$code)) {
-    print("code provided in folder metadata. Setting group code to NULL")
-    process.code <- NULL
-  }
+  # if (!is.null(folder_metadata$processing$derived_from)) {
+  #   print("derived_from provided in folder metadata. Setting itemgroup derived_from to NULL") # TODO: Decide if should allow both
+  #   process.derived_from <- NULL
+  # }
+  # if (!is.null(folder_metadata$processing$description)) {
+  #   print("description provided in folder metadata. Setting itemgroup description to NULL")
+  #   process.description <- NULL
+  # }
+  # if (!is.null(folder_metadata$processing$code)) {
+  #   print("code provided in folder metadata. Setting itemgroup code to NULL")
+  #   process.code <- NULL
+  # }
   author <- .author(author.name, author.email)
   spatial <- .spatial_coverage(file_list[1], coverage.region)
   temporal <- .temporal_coverage(temporal.resolution, temporal.start_date, temporal.end_date)
@@ -145,7 +146,6 @@ itemgroup_metadata <- function(
     group.unit <- NULL
   }
   files <- .files(file_list, base_folder)
-  test_files <<- files
   nameScheme <- list(nameFormat = name.format, separator = name.separator)
 
   if (add.definitions) {
@@ -175,30 +175,39 @@ itemgroup_metadata <- function(
     fileType = file.type,
     source = source,
     coverage = coverage,
+    naming = nameScheme,
     assets = assets,
     process = list(
       derived_from = process.derived_from,
       description = process.description,
       code = process.code
     ),
-    naming = nameScheme,
     definitions = group.definitions,
     files = files
   )
   
   folder_metadata[["fileGroups"]] <- append(folder_metadata[["fileGroups"]],
     setNames(list(hold = group_metadata), name))
+  
+  collectionName <- basename(folder_metadata$collectionName)
+  out_nam <- paste0(folder_metadata$collectionPath, "/", collectionName,
+    "_digiAtlas-metadata.json") # THIS PART OF NAME HARDCODED TO FIND LATER
+  jsonlite::toJSON(folder_metadata, pretty = T, auto_unbox = T) |>
+    cat(file = out_nam)
 
   return(folder_metadata)
 }
 
 .sub_group_metadata <- function(name.format, name.separator, file_list, group.unit) {
   cat(paste("Now enter information for the parts of:", name.format, "\n"))
-  name.separator <- paste0(name.separator, "[", "]", collapse = "|")
+  name.separator <- paste0(name.separator, "|", "\\[", "|", "]", collapse = "|")
   pieces <- unlist(strsplit(name.format, name.separator))
-  pieces <- gsub("\\[|\\]", "", pieces)
+  pieces <- gsub("\\[|\\]|\\/", "", pieces)
   name_parts <- list()
   for (i in pieces) {
+    if (i == "" | is.null(i) | is.na(i) | i == " ") {
+      next
+    }
     def <- readline(prompt = paste0("Enter definition for ", i, ": "))
     complex <- menu(c("Yes", "No"), title = paste0("Does ", i,
       " have any sub-variables that need defined?"))
@@ -209,8 +218,6 @@ itemgroup_metadata <- function(
       if (inherit == 1) {
         position <- match(i, pieces)
         vars <- lapply(strsplit(file_list, name.separator), `[`, position)
-        external_splits <<- strsplit(file_list, name.separator)
-        external_test <<- vars
         unique_vars <- unique(unlist(vars))
         for (uv in unique_vars) {
           if (is.na(uv) | uv == "" | is.null(uv)) {
@@ -222,7 +229,7 @@ itemgroup_metadata <- function(
           }
           if (include == 1) {
             repeat {
-              def <- readline(prompt = paste0("Enter definition for ", uv, ": "))
+              sub_def <- readline(prompt = paste0("Enter definition for ", uv, ": "))
               if (is.null(group.unit)) {
                 add_unit <- menu(c("Yes", "No"), title = paste0("Is ", uv,
                   " associated with a unit that differs from other sub-variables?"))
@@ -230,10 +237,10 @@ itemgroup_metadata <- function(
                   unit <- readline(prompt = paste0("Enter unit for ", uv, ": "))
                   sub_list[[uv]] <- list(definition = def, unit = unit)
                 } else {
-                  sub_list[[uv]] <- list(definition = def)
+                  sub_list[[uv]] <- list(definition = sub_def)
                 }
               } else {
-                sub_list[[uv]] <- list(definition = def)
+                sub_list[[uv]] <- list(definition = sub_def)
               }
               print(sub_list[[uv]])
               correct <- menu(c("Yes", "No"),
@@ -244,6 +251,25 @@ itemgroup_metadata <- function(
             }
           }
         }
+        add_custom <- menu(c("Yes", "No"), title = "Add a custom sub-variable?")
+        if (add_custom == 1) {
+          repeat {
+            name <- readline(prompt = "Enter name of sub-variable: ")
+            sub_def <- readline(prompt = paste0("Enter definition for ", name, ": "))
+            add_unit <- menu(c("Yes", "No"),
+              title = paste0("Is ", name, " associated with a unit that differs from other sub-variables?"))
+            if (add_unit == 1) {
+              unit <- readline(prompt = paste0("Enter unit for ", name, ": "))
+              sub_list[[name]] <- list(definition = sub_def, unit = unit)
+            } else
+              sub_list[[name]] <- list(definition = sub_def)
+            add_another <- menu(c("Yes", "No"),
+              title = "Add another custom sub-variable?")
+            if (add_another == 2) {
+              break
+            }
+          }
+        }
       } else {
         sub_var_num <- 0
         repeat {
@@ -251,14 +277,14 @@ itemgroup_metadata <- function(
           repeat {
             name <- readline(prompt = paste0("Enter name of sub-variable ",
               sub_var_num, " in ", i, ": "))
-            def <- readline(prompt = paste0("Enter definition for ", name, ": "))
+            sub_def <- readline(prompt = paste0("Enter definition for ", name, ": "))
             add_unit <- menu(c("Yes", "No"), title = paste0("Is ", name,
               " associated with a unit that differs from other sub-variables?"))
             if (add_unit == 1) {
               unit <- readline(prompt = paste0("Enter unit for ", name, ": "))
-              sub_list[[name]] <- list(definition = def, unit = unit)
+              sub_list[[name]] <- list(definition = sub_def, unit = unit)
             } else {
-              sub_list[[name]] <- list(definition = def)
+              sub_list[[name]] <- list(definition = sub_def)
             }
             print(sub_list[[name]])
             correct <- menu(c("Yes", "No"), title = paste0("Is this correct?"))
@@ -303,7 +329,8 @@ itemgroup_metadata <- function(
 }
 
 .files <- function(file_list, base_path) {
-  gsub(paste0(".*", base_path), "", file_list)
+  rel_file <- gsub(paste0(".*", base_path), "", file_list)
+  clean_rel_file <- sub("^/|^//", "", rel_file)
 }
 
 .processing_metadata <- function(process.derived_from,
@@ -437,52 +464,11 @@ itemgroup_metadata <- function(
   return(coverage)
 }
 
-# Testing scripts
-cmip_timeseries <- collection_metadata(
-  folder.path = "/home/bjyberg/aws_bucket/hazards/cmip6_indices_seasonal/year_timeseries/",
-  folder.description = "CMIP6 Year Hazard Indices",
-  metadata.author = "Brayden Youngberg",
-  metadata.author.email = "bjyberg1@gmail.com",
-  keywords = c("hazards", "cmip6"),
-  source.author = c("Ramirez-Villegas, J.", "Stewart, P."),
-  source.author.email = c("j.r.villegas@cgiar.org", "p.stewart@cgiar.org"),
-  source.license = "CC BY 4.0",
-  source.citation = "Ramirez-Villegas, J., Achicanoy, H., Thornton, P.K. 2023. CMIP6 climate hazards: human heat stress index. CGIAR. Dataset.",
-  source.url = NULL,
-  source.doi = NULL,
-  add.assets = FALSE,
-  process.description = NULL,
-  process.derived_from = NULL,
-  process.code = NULL)
 
-test <- itemgroup_metadata( # TODO: Full interactive version
-  cmip_timeseries,
-  file_list = list.files("/home/bjyberg/aws_bucket/hazards/cmip6_indices_seasonal/year_timeseries/", pattern = ".tif", full.names = TRUE),
-  name = "Yearly Hazard Indices",
-  description = "Hazard Indices",
-  file.type = "COG",
-  layers_fields = "years",
-  author.name = "Stewart, P.",
-  author.email = "p.stewart@cgiar.org",
-  source.license = "open_source",
-  source.citation = NULL,
-  source.url = NULL,
-  source.doi = NULL,
-  group.unit = NULL,
-  name.format = '[historical]/[scenario_model_time-period]_variable_summariseFN',
-  name.separator = "_",
-  coverage.region = "SSA",
-  temporal.resolution = 'yearly',
-  temporal.start_date = 1995,
-  temporal.end_date = 2080,
-  process.derived_from = "CMIP6 data",
-  process.description = "we built htiis thig",
-  process.code = "conflict_layer-builder.r",
-  add.assets = FALSE,
-  add.definitions = TRUE
-)
-
-
-folder_metadata |> jsonlite::toJSON(pretty = T) |> cat()
-
-View(test)
+# TODO: add a spatial extent option that is not inherited
+# TODO: decide if we want an indivdual author field? in itemgroup..
+# TODO: Full interactive version or shiny?
+# TODO: way of validating?? 
+# TODO: add a name option for the folder level metadata? 
+# TODO: add a try catch on save so if save error data isn't lost
+# CHECK: possible folder/folder name issue not having the full path so updataing wont work. 
