@@ -1,3 +1,131 @@
+collection_metadata <- function( #add an ability to update the metadata
+  collection.ID,
+  collection.path,
+  collection.description = NULL,
+  metadata.author = NULL,
+  metadata.author.email = NULL,
+  keywords = NULL,
+  # These are shared between folder and item groups folder takes priority, so if they are assigned here, they can't be assigned in group
+  source.author = NULL,
+  source.author.email = NULL,
+  source.license = NULL,
+  source.citation = NULL,
+  source.url = NULL,
+  source.doi = NULL,
+  process.description = NULL,
+  process.derived_from = NULL,
+  process.code = NULL,
+  custom_fields = NULL, # needs to be type list
+  assets = list() # asset format function and dictionary function
+  ) {
+  out_nam <- paste0(collection.path, "/", collection.ID,
+    "_digiAtlas-metadata.json") # THIS PART OF NAME HARDCODED TO FIND LATER
+  
+  if (file.exists(out_nam)) {
+    collection.metadata <- jsonlite::read_json(out_nam, simplifyVector = T)
+    collection.metadata$metadata$dateModified <- format(Sys.time(), "%Y-%m-%d")
+    if (!is.null(collection.description)) {
+      collection.metadata$description <- collection.description
+    }
+  } else {
+    collection.metadata <- list()
+    collection.metadata$ID <- collection.ID
+    collection.metadata$metadata$dateCreated <- format(Sys.time(), "%Y-%m-%d")
+    collection.metadata$metadata$dateModified <- format(Sys.time(), "%Y-%m-%d")
+    collection.metadata$description <- collection.description
+  }
+  if (!is.null(collection.metadata$metadata$authors)) {
+    new_author <- .author(metadata.author,
+      metadata.author.email)
+    og_author <- as.data.frame(collection.metadata$metadata$authors)
+    collection.metadata$metadata$authors <- unique(rbind(og_author, new_author))
+  } else {
+    collection.metadata$metadata$authors <- .author(metadata.author,
+      metadata.author.email)
+  }
+  if (!is.null(collection.metadata$keywords)) {
+    old <- collection.metadata$keywords
+    new <- keywords
+    collection.metadata$keywords <- unique(c(old, new))
+  } else {
+    collection.metadata$keywords <- keywords
+  }
+  if (!is.null(collection.metadata$source)) {
+    if (!is.null(source.license)) {
+      collection.metadata$source$license <- source.license
+    }
+    if (!is.null(source.author)) {
+      new_src_author <- .author(source.author, source.author.email)
+      og_src_author <- as.data.frame(collection.metadata$source$authors)
+      collection.metadata$source$authors <- unique(
+        rbind(og_src_author, new_src_author)
+      )
+    }
+    if (!is.null(source.citation)) {
+      og_citaion <- collection.metadata$source$citation
+      new_citaion <- unique(c(og_citaion, source.citation))
+      collection.metadata$source$citation <- new_citaion
+    }
+    if (!is.null(source.url)) {
+      og_url <- collection.metadata$source$url
+      new_url <- unique(c(og_url, source.url))
+      collection.metadata$source$url <- new_url
+    }
+    if (!is.null(source.doi)) {
+      og_doi <- collection.metadata$source$doi
+      new_doi <- unique(c(og_doi, source.doi))
+      collection.metadata$source$doi <- new_doi
+    }
+  } else {
+    collection.source <- .source(source.license, source.citation,
+      source.url, source.doi)
+    collection.metadata$source$authors <- .author(source.author,
+      source.author.email)
+    collection.metadata$source <- append(collection.metadata$source,
+      collection.source)
+  }
+  if (!is.null(collection.metadata$processing)) {
+    if (!is.null(process.derived_from)) {
+      og_derived <- process.derived_from
+      collection.metadata$processing$derived_from <- unique(c(og_derived,
+        process.derived_from))
+    }
+    if (!is.null(process.description)) {
+      collection.metadata$processing$description <- process.description
+    }
+    if (!is.null(process.code)) {
+      og_code <- process.code
+      collection.metadata$processing$code <- unique(c(og_code, process.code))
+    }
+  } else {
+    collection.metadata$processing <- .processing_metadata(
+      process.derived_from,
+      process.description,
+      process.code)
+  }
+  if (!is.null(collection.metadata$other_metadata)) {
+    og_md <- collection.metadata$other_metadata
+    merged_customMD <- with(
+      unique(stack(c(og_md, custom_fields))),
+      split(values, ind)
+    )
+    collection.metadata$other_metadata <-merged_customMD
+  } else {
+    collection.metadata$other_metadata <- custom_fields
+  }
+  if (!is.null(collection.metadata$assets)) {
+    og_assets <- collection.metadata$assets
+    new_assets <- list(og_assets, assets)
+    collection.metadata$assets <- unique(new_assets)
+  } else {
+    collection.metadata$assets <- assets
+  }
+  jsonlite::toJSON(collection.metadata, pretty = T, auto_unbox = T) |>
+    cat(file = out_nam)
+
+  return(collection.metadata)
+}
+
 .files <- function(file_list, base_path) {
   rel_file <- gsub(paste0(".*", base_path), "", file_list)
   clean_rel_file <- sub("^/|^//", "", rel_file)
@@ -38,7 +166,7 @@
   source.doi
 ) {
   source <- list(
-    licence = source.license,
+    license = source.license,
     citation = source.citation,
     sourceURL = source.url,
     doi = source.doi
@@ -128,13 +256,13 @@
 
 .temporal_coverage <- function(temporal.resolution, temporal.start_date, temporal.end_date) {
   coverage <- list()
-  coverage$temporal$resolution <- ""
-  coverage$temporal$start_date <- ""
-  coverage$temporal$end_date <- ""
+  coverage$temporal$resolution <- temporal.resolution
+  coverage$temporal$start_date <- temporal.start_date
+  coverage$temporal$end_date <- temporal.end_date
   return(coverage)
 }
 
-.layers <- function(path, stats = T, hist = T) {
+.layers <- function(path, stats = T, hist = T) { # TODO: add same names feature to only get names from one of a list/ group level vs file level
   type <- tools::file_ext(path)
   type <- tolower(type)
   if (type %in% c("tif", "tiff")) { # TODO: add and check ncdf
@@ -165,9 +293,13 @@
   } else {
     stop(paste(type, "is currently unsupported. No data will be added.")) # TODO: come up with a better warning/way of calling them attributs/layers
   }
+
   # TODO: need to make the stops only stop this function, not the full process. probably use tryCatch
   x_names <- names(x) # TODO: check if works for all data types (spatRaster??)
-
+  attr_ls <- list()
+  for (i in names(x)) {
+    attr_ls[[i]]$name <- i
+  }
   if (stats) {
     if (inherits(x, "spatRaster")) {
       stats_df <- global(x, c("mean", "sd", "min", "max"), na.rm = T)
@@ -193,6 +325,7 @@
       as.data.frame(do.call(rbind, df_list))
       names(df_list) <- c("mean", "sd", "min", "max", "name", "dtype")
     }
+
   }
   if (hist) {
     histos <- list()
@@ -202,7 +335,70 @@
         histos[[i]] <- hist(x[[i]])
       }
     } else if (inherits(x, "spatRaster")) {
-        histos <- hist(x)
+      histos <- hist(x)
+    }
+    for (i in seq_along(hist)) {
+      name <- histo[[i]]$xname
+      attr_ls[[name]]$hist$num_bucket <- length(histos[[i]]$counts) # num buckets
+      attr_ls[[name]]$hist$min <- min(histos[[i]]$breaks)
+      attr_ls[[name]]$hist$max <- max(histos[[i]]$breaks)
+      attr_ls[[name]]$hist$count <- histos[[i]]$counts
     }
   }
 }
+
+
+
+t1 <- collection_metadata(
+  collection.ID = "testingSHIT70",
+  collection.path = "/home/bjyberg/",
+  collection.description = "CMIP6 Year Hazard Indices",
+  metadata.author = "Brayden Youngberg",
+  metadata.author.email = "bjyberg1@gmail.com",
+  keywords = c("hazards", "cmip6"),
+  source.author = c("Ramirez-Villegas, J.", "Stewart, P."),
+  source.author.email = c("j.r.villegas@cgiar.org", "p.stewart@cgiar.org"),
+  source.license = "CC BY 4.0",
+  source.citation = "Ramirez-Villegas, J., Achicanoy, H., Thornton, P.K. 2023. CMIP6 climate hazards: human heat stress index. CGIAR. Dataset.",
+  source.url = NULL,
+  source.doi = NULL,
+  process.description = NULL,
+  process.derived_from = "/home/jovyan/common_data/atlas_hazards/cmip6/indices",
+  process.code = "https://github.com/AdaptationAtlas/hazards_prototype/blob/main/R/0_make_timeseries.R")
+
+View(t1)
+
+
+t2 <- collection_metadata(
+  collection.ID = "testingSHIT70",
+  collection.path = "/home/bjyberg/",
+  collection.description = "CMIP6 Year Hazard Indices",
+  metadata.author = "coco ho",
+  metadata.author.email = "silly2@gmail.com",
+  keywords = c("hazards", "cmip6", "climate data", 'we are fkd'),
+  source.author = c("Ramirez-Villegas, J.", "Stewart, P."),
+  source.author.email = c("j.r.villegas@cgiar.org", "p.stewart@cgiar.org"),
+  source.license = "GNUFU",
+  source.citation = "Juan Hulio salsa co.",
+  source.url = NULL,
+  source.doi = "10010101hghghg",
+  process.description = NULL,
+  custom_fields = list(crop = c("rice", "maize")),
+  assets = list(list(type = "video", href = "https://www.youtube.com")),
+  process.derived_from = "/home/jovyan/common_data/atlas_hazards/cmip6/indices")
+
+View(t2)
+
+
+
+# attr_ls
+
+# histo[[1]]
+# hist(attr_ls[[1]]$hist)
+# seq_along(hist)
+# histo <- hist(x)
+# bin_w <- (attr_ls[[1]]$hist$max - attr_ls[[1]]$hist$min) / attr_ls[[1]]$hist$num_bucket
+# ylab <- seq(attr_ls[[1]]$hist$min, attr_ls[[1]]$hist$max, bin_w)
+# ylab
+# barplot(attr_ls[[1]]$hist$count, names = ylab[-(length(ylab))])
+# length(attr_ls[[1]]$hist$count)
