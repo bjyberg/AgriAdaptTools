@@ -1,4 +1,4 @@
-library(terra)
+# library(terra)
 collection_metadata <- function(
   collection.ID,
   collection.path,
@@ -130,7 +130,7 @@ collection_metadata <- function(
 
 itemgroup_metadata <- function( # TODO: add write fn to this and catalog
   collection,
-  itemgroup.list, # NOTE: File List should be relative to top-level json folder metadata
+  itemgroup.filelist, # NOTE: File List should be relative to top-level json folder metadata
   itemgroup.name,
   itemgroup.description, #What is it /how is it different from the other groups?
   layers_fields, # should be the same across groups
@@ -152,10 +152,10 @@ itemgroup_metadata <- function( # TODO: add write fn to this and catalog
   process.description = NULL,
   process.code = NULL,
   custom_fields = NULL,
-  assets = NULL,
-  item.lyr.histograms = FALSE,
-  item.lyr.Names = FALSE,
-  item.lyr.stats = FALSE
+  assets = NULL
+  # item.lyr.histograms = FALSE,
+  # item.lyr.Names = FALSE,
+  # item.lyr.stats = FALSE
 ){
     if (inherits(collection, "character")) {
       if (!file.exists(collection)) {
@@ -175,35 +175,35 @@ itemgroup_metadata <- function( # TODO: add write fn to this and catalog
       ))
     }
     if (itemgroup.name %in% collection[["fileGroups"]][["name"]]) {
-      stop("Item group name already exists in folder metadata")
+      stop("Item group name already exists in collection metadata")
     }
     base_folder <- collection$path
     collection$metadata$dateModified <- format(Sys.time(), "%Y-%m-%d")
     author <- .author(author.name, author.email)
-    spatial <- .spatial_coverage(itemgroup.list[1], coverage.region)
+    spatial <- .spatial_coverage(itemgroup.filelist[1], coverage.region) # At the moment this assumes that all files will share the same extent, which may no be corect
     temporal <- .temporal_coverage(temporal.resolution, temporal.start_date, temporal.end_date)
     coverage <- c(spatial, temporal)
     source <- .source(source.license, source.citation, source.url, source.doi)
-    files <- .files(itemgroup.list, base_folder)
+    files <- .files(itemgroup.filelist, base_folder)
     nameScheme <- list(nameFormat = name.format, separator = name.separator)
-    files_attrs <- list()
-    if (item.lyr.Names|item.lyr.stats|item.lyr.histograms) {
-      tryCatch(
-        {
-          for (i in seq_along(files)) {
-            f_name <- files[[i]]
-            position = grep(f_name, itemgroup.list)
-            layer_attributes <- .layers(itemgroup.list[[position]],
-            item.lyr.stats, item.lyr.histograms)
-            files_attrs[[f_name]] <- layer_attributes
-          }
-        },
-        error = function(e) {
-          print(paste0("Failed to read layers from ", itemgroup.list[i]))
-        })
-    } else {
-      files_attrs <- files
-    }
+    # files_attrs <- list()
+    # if (item.lyr.Names|item.lyr.stats|item.lyr.histograms) {
+    #   tryCatch(
+    #     {
+    #       for (i in seq_along(files)) {
+    #         f_name <- files[[i]]
+    #         position = grep(f_name, itemgroup.filelist)
+    #         layer_attributes <- .layers(itemgroup.filelist[[position]],
+    #         item.lyr.stats, item.lyr.histograms)
+    #         files_attrs[[f_name]] <- layer_attributes
+    #       }
+    #     },
+    #     error = function(e) {
+    #       print(paste0("Failed to read layers from ", itemgroup.filelist[i]))
+    #     })
+    # } else {
+    #   files_attrs <- files
+    # }
 
     group_metadata <- list(
     name = itemgroup.name,
@@ -221,7 +221,8 @@ itemgroup_metadata <- function( # TODO: add write fn to this and catalog
     ),
     other_metadata = custom_fields,
     assets = assets,
-    files = files_attrs
+    files = files
+    # files = files_attrs
   )
 
   collection[["fileGroups"]] <- append(collection[["fileGroups"]],
@@ -297,37 +298,37 @@ itemgroup_metadata <- function( # TODO: add write fn to this and catalog
   return(dict)
 }
 
-.assets <- function() { #TODO: add custom fields?
-  add_asset <- menu(c("Yes", "No"),
-    title = "Add an asset (i.e., metadata, technical documentation, etc.)?")
-  if (add_asset == 1) {
-    assets <- list()
-    repeat {
-      repeat {
-        asset_type <- readline(prompt = "Enter asset type: ")
-        asset_name <- readline(prompt = "Enter asset name: ")
-        asset_path <- readline(prompt = "Enter asset path: ")
-        asset_description <- readline(prompt = "Enter asset description: ")
-        asset <- .dict(asset_name,
-          list(description = asset_description, path = asset_path))
-        print(paste("type:", asset_type, " name:", asset_name,
-          " path:", asset_path, " description:", asset_description))
-        correct <- menu(c("Yes", "No"),
-          title = paste("Is the above correct?"))
-        if (correct == 1) {
-          break
-        }
-      }
-      assets[[asset_type]] <- append(assets[[asset_type]], asset)
-      # assets <- list(assets, asset)
-      add_another <- menu(c("Yes", "No"), title = "Add another asset?")
-      if (add_another == 2) {
-        break
-      }
-    }
-    return(assets)
-  }
-}
+# .assets <- function() { #TODO: add custom fields?
+#   add_asset <- menu(c("Yes", "No"),
+#     title = "Add an asset (i.e., metadata, technical documentation, etc.)?")
+#   if (add_asset == 1) {
+#     assets <- list()
+#     repeat {
+#       repeat {
+#         asset_type <- readline(prompt = "Enter asset type: ")
+#         asset_name <- readline(prompt = "Enter asset name: ")
+#         asset_path <- readline(prompt = "Enter asset path: ")
+#         asset_description <- readline(prompt = "Enter asset description: ")
+#         asset <- .dict(asset_name,
+#           list(description = asset_description, path = asset_path))
+#         print(paste("type:", asset_type, " name:", asset_name,
+#           " path:", asset_path, " description:", asset_description))
+#         correct <- menu(c("Yes", "No"),
+#           title = paste("Is the above correct?"))
+#         if (correct == 1) {
+#           break
+#         }
+#       }
+#       assets[[asset_type]] <- append(assets[[asset_type]], asset)
+#       # assets <- list(assets, asset)
+#       add_another <- menu(c("Yes", "No"), title = "Add another asset?")
+#       if (add_another == 2) {
+#         break
+#       }
+#     }
+#     return(assets)
+#   }
+# }
 
 .spatial_coverage <- function(path, coverage.region) {
   if (!file.exists(path)) {
@@ -465,48 +466,48 @@ itemgroup_metadata <- function( # TODO: add write fn to this and catalog
 
 
 
-conflict_collection <- collection_metadata(
-  collection.ID = "atlas_conflict0",
-  collection.path = "/home/bjyberg/Biodiversity_International/Adaptation_Atlas/Conflict",
-  collection.description = "Conflcit data for the adaptation atlas",
-  metadata.author = "Brayden Youngberg",
-  metadata.author.email = "bjyberg1@gmail.com",
-  keywords = list("adaptive capaticy","vulnerability", "acled", 'conflict'),
-  source.author = c("Youngberg, B.", "Vyas, S."),
-  source.author.email = c("bjyberg1@gmail.com", "s.vyas@cgiar.org"),
-  source.license = NULL,
-  source.citation = NULL,
-  source.url = NULL,
-  source.doi = NULL,
-  process.description = NULL,
-  process.derived_from = NULL,
-  process.code = NULL)
+# conflict_collection <- collection_metadata(
+#   collection.ID = "atlas_conflict0",
+#   collection.path = "/home/bjyberg/Biodiversity_International/Adaptation_Atlas/Conflict",
+#   collection.description = "Conflcit data for the adaptation atlas",
+#   metadata.author = "Brayden Youngberg",
+#   metadata.author.email = "bjyberg1@gmail.com",
+#   keywords = list("adaptive capaticy","vulnerability", "acled", 'conflict'),
+#   source.author = c("Youngberg, B.", "Vyas, S."),
+#   source.author.email = c("bjyberg1@gmail.com", "s.vyas@cgiar.org"),
+#   source.license = NULL,
+#   source.citation = NULL,
+#   source.url = NULL,
+#   source.doi = NULL,
+#   process.description = NULL,
+#   process.derived_from = NULL,
+#   process.code = NULL)
 
-  acled_itemgroup0 <- itemgroup_metadata(
-    collection = conflict_collection,
-    itemgroup.list = "/home/bjyberg/Biodiversity_International/Adaptation_Atlas/Conflict/conflict_historical_2020-2023.tif",
-    itemgroup.name = "acled_raw",
-    itemgroup.description = "Rasterized ACLED data",
-    itemgroup.unit = "# conflicts per pixel",
-    layers_fields = NULL,
-    author.name = "Brayden Youngberg",
-    author.email = "bjyberg1@gmail.com",
-    file.type = "COG",
-    name.format = "acled_raw",
-    name.separator = "_",
-    coverage.region = "SSA",
-    temporal.resolution = "NA",
-    temporal.start_date = "2020-04-26",
-    temporal.end_date = "2023-04-32",
-    source.license = NULL,
-    source.citation = NULL,
-    source.url = NULL,
-    source.doi = NULL,
-    assets = list(type = "documentation", path = 'Conflict Notes.docx'),
-    item.lyr.histograms = TRUE,
-    item.lyr.stats = TRUE,
-    item.lyr.Names = TRUE,
-    process.description ="A rasterized, normalized and aggregated version of the ACLED conflict .csv file with agreements and peaceful protests removed. It was processed using kernel density estimate to indicate the effect of conflict.",
-    process.derived_from = "ACLED_2020-04-26-2023-04-23_Africa.csv",
-    process.code = "conflict_layer-builder.r"
-  )
+#   acled_itemgroup0 <- itemgroup_metadata(
+#     collection = conflict_collection,
+#     itemgroup.list = "/home/bjyberg/Biodiversity_International/Adaptation_Atlas/Conflict/conflict_historical_2020-2023.tif",
+#     itemgroup.name = "acled_raw",
+#     itemgroup.description = "Rasterized ACLED data",
+#     itemgroup.unit = "# conflicts per pixel",
+#     layers_fields = NULL,
+#     author.name = "Brayden Youngberg",
+#     author.email = "bjyberg1@gmail.com",
+#     file.type = "COG",
+#     name.format = "acled_raw",
+#     name.separator = "_",
+#     coverage.region = "SSA",
+#     temporal.resolution = "NA",
+#     temporal.start_date = "2020-04-26",
+#     temporal.end_date = "2023-04-32",
+#     source.license = NULL,
+#     source.citation = NULL,
+#     source.url = NULL,
+#     source.doi = NULL,
+#     assets = list(type = "documentation", path = 'Conflict Notes.docx'),
+#     item.lyr.histograms = TRUE,
+#     item.lyr.stats = TRUE,
+#     item.lyr.Names = TRUE,
+#     process.description ="A rasterized, normalized and aggregated version of the ACLED conflict .csv file with agreements and peaceful protests removed. It was processed using kernel density estimate to indicate the effect of conflict.",
+#     process.derived_from = "ACLED_2020-04-26-2023-04-23_Africa.csv",
+#     process.code = "conflict_layer-builder.r"
+#   )
