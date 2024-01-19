@@ -1,4 +1,35 @@
-# library(terra)
+#' Create or update metadata for a collection.
+#'
+#' This function creates or updates metadata for a collection, including information
+#' about the collection itself, authors, keywords, source details, processing information,
+#' custom fields, and assets. The metadata is stored in a JSON file with a standardized
+#' naming convention.
+#'
+#' @param collection.ID Unique identifier for the collection.
+#' @param collection.path Path to the collection.
+#' @param collection.description Description of the collection.
+#' @param metadata.author Author of the metadata.
+#' @param metadata.author.email Email of the metadata author.
+#' @param keywords Keywords associated with the collection.
+#' @param source.author Author of the data source.
+#' @param source.author.email Email of the data source author.
+#' @param source.license License information for the data source.
+#' @param source.citation Citation details for the data source.
+#' @param source.url URL of the data source.
+#' @param source.doi DOI of the data source.
+#' @param process.description Description of the data processing.
+#' @param process.derived_from Details about the data derived from.
+#' @param process.code Code used in the data processing.
+#' @param custom_fields Custom metadata fields in a list.
+#' @param assets Asset format and dictionary functions.
+#'
+#' @return A list containing the collection metadata.
+#' @import jsonlite
+#' @import terra
+#' @export
+#' 
+#' 
+
 collection_metadata <- function(
   collection.ID,
   collection.path,
@@ -127,6 +158,44 @@ collection_metadata <- function(
 
   return(collection.metadata)
 }
+
+#' Create or update metadata for an item group within a collection.
+#'
+#' This function adds or updates metadata for an item group within a collection,
+#' including information about the item group, author details, spatial and temporal coverage,
+#' source information, file details, and custom fields. The metadata is stored in the
+#' collection's JSON file with a standardized naming convention.
+#'
+#' @param collection Collection metadata or path to the collection metadata file.
+#' @param itemgroup.filelist List of files in the item group.
+#' @param itemgroup.name Name of the item group.
+#' @param itemgroup.description Description of the item group.
+#' @param layers_fields Fields shared among layers in the item group.
+#' @param author.name Author of the item group.
+#' @param author.email Email of the item group author.
+#' @param itemgroup.unit Unit of measurement for the item group.
+#' @param file.type Type of files in the item group.
+#' @param name.format Format of the file names in the item group.
+#' @param name.separator Separator used in the file names.
+#' @param coverage.region Spatial coverage region.
+#' @param temporal.resolution Temporal resolution of the item group.
+#' @param temporal.start_date Start date of temporal coverage.
+#' @param temporal.end_date End date of temporal coverage.
+#' @param source.license License information for the data source.
+#' @param source.citation Citation details for the data source.
+#' @param source.url URL of the data source.
+#' @param source.doi DOI of the data source.
+#' @param process.derived_from Details about the data derived from.
+#' @param process.description Description of the data processing.
+#' @param process.code Code used in the data processing.
+#' @param custom_fields Custom metadata fields in a list.
+#' @param assets Asset format and dictionary functions.
+#'
+#' @return A list containing the updated collection metadata.
+#' @import jsonlite
+#' @import terra
+#' @export
+#' 
 
 itemgroup_metadata <- function( # TODO: add write fn to this and catalog
   collection,
